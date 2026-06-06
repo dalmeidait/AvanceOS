@@ -1,0 +1,13 @@
+node_modules
+dist
+uploads
+.env
+.env.*
+!.env.example
+*.log
+backend-dev.*.log
+runtime-test.*.log
+.git
+.gitignore
+prisma/migrations_backup_postgres
+prisma.config.ts.bak

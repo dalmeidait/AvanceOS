@@ -1,0 +1,976 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id                    String                @id @default(uuid())
+  email                 String                @unique
+  senhaHash             String
+  nome                  String
+  cargo                 String                @default("RECEPCIONISTA")
+  isActive              Boolean               @default(true)
+  requirePasswordChange Boolean               @default(false)
+  mfaAtivo              Boolean               @default(false)
+  mfaSecret             String?
+  versaoToken           Int                   @default(0)
+  criadoEm              DateTime              @default(now())
+  atualizadoEm          DateTime              @updatedAt
+  logsAuditoria         LogAuditoria[]
+  lancamentosContabeis  LancamentoContabilOperacional[]
+  movimentacoes         MovimentacaoEstoque[]
+  ordensServico         OrdemServico[]
+  clienteInteracoes     ClienteInteracao[]
+  ordemServicoEventos   OrdemServicoEvento[]
+  pedidosCompraCriados  PedidoCompra[]                 @relation("PedidoCompraCriadoPor")
+  pedidosCompraAprovados PedidoCompra[]                @relation("PedidoCompraAprovadoPor")
+  recebimentosCompra    RecebimentoCompra[]
+  divergenciasRecebimento DivergenciaRecebimento[]
+  documentosPedidoCompra DocumentoPedidoCompra[]
+  documentosOrdemServico DocumentoOrdemServico[]
+
+  @@map("usuarios")
+}
+
+model Fornecedor {
+  id                    String                @id @default(uuid())
+  cnpj                  String                @unique
+  razaoSocial           String
+  nomeFantasia          String
+  emailFinanceiro       String?
+  tipoPessoa            String                @default("PJ")
+  inscricaoEstadual     String?
+  inscricaoMunicipal    String?
+  categoriaFornecedor   String?
+  tipoFornecimento      String?
+  nomeContatoPrincipal  String?
+  telefone              String?
+  whatsapp              String?
+  email                 String?
+  site                  String?
+  cep                   String?
+  logradouro            String?
+  numero                String?
+  complemento           String?
+  bairro                String?
+  cidade                String?
+  estado                String?
+  pais                  String?               @default("Brasil")
+  prazoEntregaMedioDias Int?
+  condicaoPagamento     String?
+  limiteCredito         Decimal?              @db.Decimal(18, 2)
+  fornecePecas          Boolean               @default(false)
+  forneceServicos       Boolean               @default(false)
+  forneceFerramentas    Boolean               @default(false)
+  forneceInsumos        Boolean               @default(false)
+  forneceTecnologia     Boolean               @default(false)
+  aceitaPedidoUrgente   Boolean               @default(false)
+  avaliacao             Int?
+  observacoesComerciais String?               @db.NVarChar(Max)
+  observacoesInternas   String?               @db.NVarChar(Max)
+  status                String                @default("ATIVO")
+  ativo                 Boolean               @default(true)
+  criadoEm              DateTime              @default(now())
+  atualizadoEm          DateTime              @updatedAt
+  lancamentosContabeis  LancamentoContabilOperacional[]
+  movimentacoes         MovimentacaoEstoque[]
+  representantes        Representante[]
+  documentosFiscais     DocumentoFiscalSimulado[]
+  produtosFornecedores  ProdutoFornecedor[]
+  pedidosCompra         PedidoCompra[]
+  divergenciasRecebimento DivergenciaRecebimento[]
+
+  @@map("fornecedores")
+}
+
+model Representante {
+  id           String     @id @default(uuid())
+  nome         String
+  whatsapp     String
+  isActive     Boolean    @default(true)
+  fornecedorId String
+  criadoEm     DateTime   @default(now())
+  atualizadoEm DateTime   @updatedAt
+  fornecedor   Fornecedor @relation(fields: [fornecedorId], references: [id])
+
+  @@map("representantes")
+}
+
+model LogAuditoria {
+  id                String   @id @default(uuid())
+  usuarioId         String?
+  userName          String?
+  userEmail         String?
+  userRole          String?
+  acao              String
+  entidadeAfetada   String
+  entidadeId        String?
+  description       String?
+  ipAddress         String?
+  userAgent         String?
+  metadata          String?  @db.NVarChar(Max)
+  valoresAntigos    String?  @db.NVarChar(Max)
+  valoresNovos      String?  @db.NVarChar(Max)
+  nivelVisibilidade String   @default("BASICO")
+  criadoEm          DateTime @default(now())
+  usuario           Usuario? @relation(fields: [usuarioId], references: [id])
+
+  @@map("logs_auditoria")
+}
+
+model Cliente {
+  id                 String         @id @default(uuid())
+  nome               String
+  cpf_cnpj           String         @unique
+  telefone           String?
+  email              String?        @unique
+  cep                String?
+  bairro             String?
+  rua                String?
+  numero             String?
+  complemento        String?
+  cidade             String?
+  estado             String?
+  totalGasto         Float          @default(0)
+  nivelDesconto      String         @default("Bronze")
+  percentualDesconto Float          @default(0)
+  aceitaMarketing    Boolean        @default(true)
+  ultimaRevisao      DateTime?
+  criado_em          DateTime       @default(now())
+  documentosFiscais  DocumentoFiscalSimulado[]
+  ordens_servico     OrdemServico[]
+  veiculos           Veiculo[]
+  interacoes         ClienteInteracao[]
+  tags               ClienteTagAssignment[]
+}
+
+model Veiculo {
+  id                   String         @id @default(uuid())
+  placa                String         @unique
+  modelo               String
+  marca                String
+  ano                  String?
+  cor                  String?
+  quilometragem        Int?
+  avarias_previas      Boolean?       @default(false)
+  avarias_previas_desc String?        @db.NVarChar(Max)
+  pertences_valor      Boolean?       @default(false)
+  pertences_valor_desc String?        @db.NVarChar(Max)
+  luzes_painel         Boolean?       @default(false)
+  luzes_painel_desc    String?        @db.NVarChar(Max)
+  cliente_id           String
+  criado_em            DateTime       @default(now())
+  documentosFiscais    DocumentoFiscalSimulado[]
+  ordens_servico       OrdemServico[]
+  interacoes           ClienteInteracao[]
+  cliente              Cliente        @relation(fields: [cliente_id], references: [id], onUpdate: NoAction)
+}
+
+model Produto {
+  id                  String                @id @default(uuid())
+  sku                 String                @unique
+  nome                String
+  descricao           String?               @db.NVarChar(Max)
+  marca               String
+  categoria           String                @default("GERAL")
+  tipo                String                @default("PECA")
+  unidade             String                @default("UN")
+  veiculosCompativeis String                @db.NVarChar(Max)
+  localizacaoFisica   String
+  fornecedor          String?
+  aplicacao           String?               @db.NVarChar(Max)
+  notes               String?               @db.NVarChar(Max)
+  status              String                @default("ATIVO")
+  controlaEstoque     Boolean               @default(true)
+  podeVenderPdv       Boolean               @default(true)
+  podeVincularOs      Boolean               @default(true)
+  quantityInStock     Int                   @default(0)
+  estoqueBloqueado    Int                   @default(0)
+  estoqueMinimo       Int                   @default(5)
+  precoCusto          Float
+  precoVenda          Float
+  criadoEm            DateTime              @default(now())
+  atualizadoEm        DateTime              @updatedAt
+  itensOS             ItemOS[]
+  movimentacoes       MovimentacaoEstoque[]
+  solicitacoes        SolicitacaoEstoque[]
+  fornecedores        ProdutoFornecedor[]
+  itensPedidoCompra   PedidoCompraItem[]
+  divergenciasRecebimento DivergenciaRecebimento[]
+
+  @@map("produtos")
+}
+
+model ProdutoFornecedor {
+  id                    String     @id @default(uuid())
+  produtoId             String
+  fornecedorId          String
+  codigoFornecedor      String?
+  custoUltimaCompra     Decimal?   @db.Decimal(10, 2)
+  prazoEntregaDias      Int?
+  fornecedorPreferencial Boolean   @default(false)
+  ativo                 Boolean    @default(true)
+  observacao            String?    @db.NVarChar(Max)
+  criadoEm              DateTime   @default(now())
+  atualizadoEm          DateTime   @updatedAt
+  produto               Produto    @relation(fields: [produtoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fornecedor            Fornecedor @relation(fields: [fornecedorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([produtoId, fornecedorId])
+  @@index([produtoId])
+  @@index([fornecedorId])
+  @@index([fornecedorPreferencial])
+  @@map("produtos_fornecedores")
+}
+
+model Servico {
+  id                   String   @id @default(uuid())
+  codigo               String   @unique
+  nome                 String
+  descricao            String?  @db.NVarChar(Max)
+  categoria            String   @default("GERAL")
+  valor                Decimal  @db.Decimal(12, 2)
+  tempoEstimadoMinutos Int?
+  geraComissao         Boolean  @default(false)
+  status               String   @default("ATIVO")
+  observacaoTecnica    String?  @db.NVarChar(Max)
+  notes                String?  @db.NVarChar(Max)
+  criadoEm             DateTime @default(now())
+  atualizadoEm         DateTime @updatedAt
+  itensOS              ItemOS[]
+
+  @@map("servicos")
+}
+
+model MovimentacaoEstoque {
+  id                 String      @id @default(uuid())
+  tipo               String
+  quantidade         Int
+  justificativa      String?     @db.NVarChar(Max)
+  previousQuantity   Int?
+  newQuantity        Int?
+  reason             String?     @db.NVarChar(Max)
+  serviceOrderNumber String?
+  notes              String?     @db.NVarChar(Max)
+  usuarioId          String?
+  notaFiscal         String?
+  fornecedorId       String?
+  custoUnitario      Float?
+  produtoId          String
+  ordemServicoId     String?
+  timestamp          DateTime    @default(now())
+  fornecedor         Fornecedor? @relation(fields: [fornecedorId], references: [id])
+  produto            Produto     @relation(fields: [produtoId], references: [id])
+  usuario            Usuario?    @relation(fields: [usuarioId], references: [id])
+  updatedAt          DateTime    @updatedAt
+
+  @@index([produtoId])
+  @@index([tipo])
+  @@index([timestamp])
+  @@index([serviceOrderNumber])
+  @@map("movimentacoes_estoque")
+}
+
+model OrdemServico {
+  id                  String                  @id @default(uuid())
+  numeroOS            Int                     @unique @default(autoincrement())
+  placaVeiculo        String
+  modeloVeiculo       String
+  status              String                  @default("ABERTA")
+  codigoUnicoAceite   String                  @unique
+  termoAssinadoUrl    String?
+  descricao           String?                 @db.NVarChar(Max)
+  relatoMecanico      String?                 @db.NVarChar(Max)
+  diagnostico         String?                 @db.NVarChar(Max)
+  valorMaoDeObra      Float                   @default(0)
+  descontoAplicado    Float                   @default(0)
+  valorFinal          Float                   @default(0)
+  cliente_id          String
+  veiculo_id          String
+  responsavel_id      String?
+  criadoEm            DateTime                @default(now())
+  atualizadoEm        DateTime                @updatedAt
+
+  // Execução Técnica / Resultado do Mecânico
+  diagnosticoConfirmado         String?   @db.NVarChar(Max)
+  testesRealizados              String?   @db.NVarChar(Max)
+  resultadoDosTestes            String?   @db.NVarChar(Max)
+  solucaoAplicada               String?   @db.NVarChar(Max)
+  observacoesTecnicasFinais     String?   @db.NVarChar(Max)
+  responsavelTecnico            String?
+  dataHoraConclusaoTecnica      DateTime?
+
+
+  itens               ItemOS[]
+  lancamentosContabeis LancamentoContabilOperacional[]
+  cliente             Cliente                 @relation(fields: [cliente_id], references: [id], onUpdate: NoAction)
+  responsavel         Usuario?                @relation(fields: [responsavel_id], references: [id])
+  veiculo             Veiculo                 @relation(fields: [veiculo_id], references: [id], onUpdate: NoAction)
+  pagamentos          Pagamento[]
+  pesquisaNps         PesquisaNPS?
+  transacoes          TransacaoFinanceira[]
+  solicitacoesEstoque SolicitacaoEstoque[]
+  documentos        OrdemServicoDocumento[]
+  documentosFiscais DocumentoFiscalSimulado[]
+  eventos           OrdemServicoEvento[]
+  documentosDossie  DocumentoOrdemServico[]
+  orcamentos        Orcamento[]
+  interacoes        ClienteInteracao[]
+  pedidosCompra     PedidoCompra[]
+
+  @@map("ordens_servico")
+}
+
+model OrdemServicoDocumento {
+  id             String       @id @default(uuid())
+  ordemServicoId String
+  tipoDocumento  String
+  nomeOriginal   String
+  nomeArquivo    String
+  caminho        String
+  mimeType       String
+  tamanho        Int
+  criadoPor      String?
+  orcamentoId    String?
+  criadoEm       DateTime     @default(now())
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+
+  @@index([ordemServicoId])
+  @@index([tipoDocumento])
+  @@map("ordem_servico_documentos")
+}
+
+model DocumentoOrdemServico {
+  id               String       @id @default(uuid())
+  ordemServicoId   String
+  tipoDocumento    String
+  descricao        String       @db.NVarChar(Max)
+  observacao       String?      @db.NVarChar(Max)
+  nomeOriginal     String       @db.NVarChar(Max)
+  nomeArquivoSalvo String       @db.NVarChar(Max)
+  caminhoRelativo  String       @db.NVarChar(Max)
+  mimeType         String
+  tamanhoBytes     Int
+  usuarioId        String?
+  status           String       @default("ATIVO") // ATIVO, CANCELADO
+  criadoEm         DateTime     @default(now())
+  atualizadoEm     DateTime     @updatedAt
+  canceladoEm      DateTime?
+
+  ordemServico     OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario          Usuario?     @relation(fields: [usuarioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([ordemServicoId])
+  @@index([tipoDocumento])
+  @@index([status])
+  @@map("documentos_dossie_os")
+}
+
+model ItemOS {
+  id             String       @id @default(uuid())
+  tipoItem       String       @default("PRODUTO")
+  quantidade     Int
+  valorUnitario  Float
+  subtotal       Float        @default(0)
+  descricao      String?       @db.NVarChar(Max)
+  observacao     String?       @db.NVarChar(Max)
+  ordemServicoId String
+  servicoId      String?
+  produtoId      String?
+  servicoNome    String?       @db.NVarChar(Max)
+  mecanicoId     String?
+  criadoEm       DateTime     @default(now())
+  atualizadoEm   DateTime     @updatedAt
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  servico        Servico?     @relation(fields: [servicoId], references: [id])
+  produto        Produto?     @relation(fields: [produtoId], references: [id])
+
+  @@map("itens_os")
+}
+
+model SolicitacaoEstoque {
+  id                    String        @id @default(uuid())
+  ordemServicoId        String?
+  veiculoId             String?
+  clienteId             String?
+  mecanicoId            String?
+  nomeProdutoSolicitado String
+  categoria             String?
+  tipoItem              String        @default("PECA")
+  quantidadeSolicitada  Float
+  unidade               String        @default("UN")
+  aplicacao             String?
+  justificativaTecnica  String        @db.NVarChar(Max)
+  urgencia              String
+  status                String        @default("PENDENTE")
+  observacoes           String?       @db.NVarChar(Max)
+  produtoVinculadoId    String?
+  criadoEm              DateTime      @default(now())
+  atualizadoEm          DateTime      @updatedAt
+  ordemServico          OrdemServico? @relation(fields: [ordemServicoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  produtoVinculado      Produto?      @relation(fields: [produtoVinculadoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pedidosCompra         PedidoCompra[]
+
+  @@map("solicitacoes_estoque")
+}
+
+model Pagamento {
+  id               String       @id @default(uuid())
+  ordem_servico_id String
+  forma_pagamento  String
+  valor            Float
+  data_pagamento   DateTime     @default(now())
+  documentosFiscais DocumentoFiscalSimulado[]
+  ordem_servico    OrdemServico @relation(fields: [ordem_servico_id], references: [id], onDelete: Cascade)
+}
+
+model TransacaoFinanceira {
+  id              String               @id @default(uuid())
+  tipo            String
+  valor           Float
+  status          String               @default("PENDENTE")
+  metodoPagamento String
+  dataVencimento  DateTime
+  dataPagamento   DateTime?
+  ordemServicoId  String?
+  vendaPdvId      String?
+  categoriaId     String?
+  mecanicoId      String?
+  categoria       CategoriaFinanceira? @relation(fields: [categoriaId], references: [id])
+  ordemServico    OrdemServico?        @relation(fields: [ordemServicoId], references: [id])
+  venda           VendaPDV?            @relation(fields: [vendaPdvId], references: [id])
+
+  @@map("transacoes_financeiras")
+}
+
+model CategoriaFinanceira {
+  id             String                @id @default(uuid())
+  nome           String
+  codigoContabil String?
+  transacoes     TransacaoFinanceira[]
+
+  @@map("categorias_financeiras")
+}
+
+model Comissao {
+  id             String   @id @default(uuid())
+  mecanicoId     String
+  ordemServicoId String
+  valor          Float
+  dataLcto       DateTime @default(now())
+
+  @@map("comissoes_mecanicos")
+}
+
+model SessaoCaixa {
+  id                  String    @id @default(uuid())
+  usuarioId           String
+  dataAbertura        DateTime  @default(now())
+  dataFechamento      DateTime?
+  saldoInicial        Float
+  saldoFinalCalculado Float     @default(0)
+  saldoFinalInformado Float?
+
+  @@map("sessoes_caixa")
+}
+
+model VendaPDV {
+  id         String                @id @default(uuid())
+  clienteId  String?
+  valorTotal Float
+  criadoEm   DateTime              @default(now())
+  documentosFiscais DocumentoFiscalSimulado[]
+  itens      ItemVendaPDV[]
+  transacoes TransacaoFinanceira[]
+
+  @@map("vendas_pdv")
+}
+
+model DocumentoFiscalSimulado {
+  id                String   @id @default(uuid())
+  numero            String?
+  serie             String?
+  tipoDocumento     String
+  naturezaOperacao  String?
+  status            String   @default("RASCUNHO")
+
+  clienteId         String?
+  veiculoId         String?
+  ordemServicoId    String?
+  fornecedorId      String?
+  pagamentoId       String?
+  vendaPdvId        String?
+  pedidoCompraId    String?
+
+  dataEmissao       DateTime @default(now())
+  dataCompetencia   DateTime?
+
+  valorServicos     Decimal  @default(0) @db.Decimal(10, 2)
+  valorProdutos     Decimal  @default(0) @db.Decimal(10, 2)
+  valorDesconto     Decimal  @default(0) @db.Decimal(10, 2)
+  valorTotal        Decimal  @default(0) @db.Decimal(10, 2)
+
+  observacoes       String?  @db.NVarChar(Max)
+  semValidadeFiscal Boolean  @default(true)
+  origem            String   @default("MANUAL")
+
+  criadoEm          DateTime @default(now())
+  atualizadoEm      DateTime @updatedAt
+
+  cliente           Cliente?      @relation(fields: [clienteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  veiculo           Veiculo?      @relation(fields: [veiculoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ordemServico      OrdemServico? @relation(fields: [ordemServicoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fornecedor        Fornecedor?   @relation(fields: [fornecedorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pagamento         Pagamento?    @relation(fields: [pagamentoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  vendaPdv          VendaPDV?     @relation(fields: [vendaPdvId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pedidoCompra      PedidoCompra? @relation(fields: [pedidoCompraId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([dataEmissao])
+  @@index([tipoDocumento])
+  @@index([status])
+  @@index([clienteId])
+  @@index([fornecedorId])
+  @@index([ordemServicoId])
+  @@index([pedidoCompraId])
+  @@index([origem])
+  @@map("documentos_fiscais_simulados")
+}
+
+model ItemVendaPDV {
+  id         String   @id @default(uuid())
+  vendaId    String
+  produtoId  String
+  quantidade Int
+  valorUn    Float
+  venda      VendaPDV @relation(fields: [vendaId], references: [id])
+
+  @@map("itens_venda_pdv")
+}
+
+model RecursoFisico {
+  id           String        @id @default(uuid())
+  nome         String
+  tipo         String
+  agendamentos Agendamento[]
+
+  @@map("recursos_fisicos")
+}
+
+model Agendamento {
+  id              String        @id @default(uuid())
+  dataInicio      DateTime
+  dataFim         DateTime?
+  clienteId       String
+  veiculoDesc     String
+  recursoId       String
+  mecanicoId      String?
+  status          String        @default("AGENDADO")
+  ordemServicoId  String?
+  veiculoId       String?
+  responsavelId   String?
+  horaSaida       DateTime?
+  observacoes     String?       @db.NVarChar(Max)
+  criadoEm        DateTime      @default(now())
+  atualizadoEm    DateTime      @updatedAt
+  recurso         RecursoFisico @relation(fields: [recursoId], references: [id])
+
+  @@map("agendamentos")
+}
+
+model PesquisaNPS {
+  id             String       @id @default(uuid())
+  nota           Int
+  comentario     String?      @db.NVarChar(Max)
+  ordemServicoId String       @unique
+  dataResposta   DateTime     @default(now())
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id])
+
+  @@map("pesquisas_nps")
+}
+
+model TechHubDiagnostic {
+  id                 String  @id @default(uuid())
+  fileName           String
+  serviceOrderNumber String?
+  module             String?
+  system             String?
+  target             String?
+  eventType          String?
+  diagnosticCategory String?
+
+  customerName     String?
+  customerDocument String?
+
+  vehiclePlate     String?
+  vehicleBrand     String?
+  vehicleModel     String?
+  vehicleYear      Int?
+  vehicleMileageKm Int?
+
+  scenario              String?
+  severity              String?
+  diagnosticDescription String?
+
+  sourceCreatedAt DateTime?
+  processedAt     DateTime  @default(now())
+
+  rawPayload String @db.NVarChar(Max)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fileName])
+  @@index([serviceOrderNumber])
+  @@index([vehiclePlate])
+  @@index([customerName])
+  @@index([processedAt])
+}
+
+model ManualProcedimento {
+  id             String   @id @default(uuid())
+  titulo         String
+  descricao      String?
+  area           String
+  categoria      String
+  tipo           String
+  nivelAcesso    String
+  arquivoUrl     String?
+  conteudoTexto  String?  @db.NVarChar(Max)
+  versao         String?
+  status         String   @default("ATIVO")
+  criadoEm       DateTime @default(now())
+  atualizadoEm   DateTime @updatedAt
+
+  @@map("manuais_procedimentos")
+}
+
+model LancamentoContabilOperacional {
+  id             String   @id @default(uuid())
+  tipo           String
+  categoria      String
+  centroCusto    String?
+  descricao      String
+  valor          Decimal  @db.Decimal(10, 2)
+  dataLancamento DateTime @default(now())
+  competencia    DateTime?
+  dataVencimento DateTime?
+  dataPagamento  DateTime?
+  dataRecebimento DateTime?
+  numeroDocumento String?
+  recorrente     Boolean  @default(false)
+  parcelaAtual   Int?
+  parcelaTotal   Int?
+  naturezaFinanceira String @default("LANCAMENTO")
+
+  fornecedorId   String?
+  ordemServicoId String?
+  pedidoCompraId String?
+  usuarioId      String?
+
+  formaPagamento String?
+  status         String   @default("REGISTRADO")
+  origem         String   @default("MANUAL")
+  observacoes    String?  @db.NVarChar(Max)
+
+  criadoEm       DateTime @default(now())
+  atualizadoEm   DateTime @updatedAt
+
+  fornecedor     Fornecedor?   @relation(fields: [fornecedorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ordemServico   OrdemServico? @relation(fields: [ordemServicoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pedidoCompra   PedidoCompra? @relation(fields: [pedidoCompraId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario        Usuario?      @relation(fields: [usuarioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([tipo])
+  @@index([categoria])
+  @@index([centroCusto])
+  @@index([naturezaFinanceira])
+  @@index([status])
+  @@index([origem])
+  @@index([dataLancamento])
+  @@index([competencia])
+  @@index([dataVencimento])
+  @@index([fornecedorId])
+  @@index([ordemServicoId])
+  @@index([pedidoCompraId])
+  @@map("lancamentos_contabeis_operacionais")
+}
+
+model PedidoCompra {
+  id                       String                         @id @default(uuid())
+  numero                   Int                            @unique @default(autoincrement())
+  fornecedorId             String?
+  fornecedorAvulsoNome     String?
+  fornecedorAvulsoDocumento String?
+  solicitacaoEstoqueId     String?
+  osId                     String?
+  status                   String                         @default("RASCUNHO")
+  valorTotal               Decimal                        @default(0) @db.Decimal(10, 2)
+  previsaoEntrega          DateTime?
+  formaPagamento           String?
+  vencimento               DateTime?
+  observacao               String?                        @db.NVarChar(Max)
+  criadoPorId              String
+  aprovadoPorId            String?
+  dataAprovacao            DateTime?
+  criadoEm                 DateTime                       @default(now())
+  atualizadoEm             DateTime                       @updatedAt
+  fornecedor               Fornecedor?                    @relation(fields: [fornecedorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  solicitacaoEstoque       SolicitacaoEstoque?            @relation(fields: [solicitacaoEstoqueId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ordemServico             OrdemServico?                  @relation(fields: [osId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  criadoPor                Usuario                        @relation("PedidoCompraCriadoPor", fields: [criadoPorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  aprovadoPor              Usuario?                       @relation("PedidoCompraAprovadoPor", fields: [aprovadoPorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  itens                    PedidoCompraItem[]
+  recebimentos             RecebimentoCompra[]
+  divergencias             DivergenciaRecebimento[]
+  lancamentosContabeis     LancamentoContabilOperacional[]
+  documentosFiscais        DocumentoFiscalSimulado[]
+  documentos               DocumentoPedidoCompra[]
+
+  @@index([status])
+  @@index([fornecedorId])
+  @@index([solicitacaoEstoqueId])
+  @@index([osId])
+  @@index([criadoEm])
+  @@map("pedidos_compra")
+}
+
+model PedidoCompraItem {
+  id              String        @id @default(uuid())
+  pedidoCompraId  String
+  produtoId       String?
+  descricaoManual String?       @db.NVarChar(Max)
+  quantidade      Int
+  valorUnitario   Decimal       @db.Decimal(10, 2)
+  valorTotal      Decimal       @db.Decimal(10, 2)
+  observacao      String?       @db.NVarChar(Max)
+  criadoEm        DateTime      @default(now())
+  atualizadoEm    DateTime      @updatedAt
+  pedidoCompra    PedidoCompra  @relation(fields: [pedidoCompraId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  produto         Produto?      @relation(fields: [produtoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([pedidoCompraId])
+  @@index([produtoId])
+  @@map("pedidos_compra_itens")
+}
+
+model RecebimentoCompra {
+  id               String        @id @default(uuid())
+  pedidoCompraId   String
+  recebidoPorId    String
+  dataRecebimento  DateTime      @default(now())
+  status           String        @default("RECEBIDO_TOTAL")
+  observacao       String?       @db.NVarChar(Max)
+  criadoEm         DateTime      @default(now())
+  atualizadoEm     DateTime      @updatedAt
+  pedidoCompra     PedidoCompra  @relation(fields: [pedidoCompraId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  recebidoPor      Usuario       @relation(fields: [recebidoPorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  divergencias     DivergenciaRecebimento[]
+
+  @@index([pedidoCompraId])
+  @@index([recebidoPorId])
+  @@index([status])
+  @@index([dataRecebimento])
+  @@map("recebimentos_compra")
+}
+
+model DivergenciaRecebimento {
+  id                   String             @id @default(uuid())
+  pedidoCompraId       String
+  recebimentoCompraId  String?
+  fornecedorId         String?
+  produtoId            String?
+  descricaoProduto     String?
+  tipoDivergencia      String
+  quantidadeAfetada    Int
+  valorAfetado         Decimal?           @db.Decimal(10, 2)
+  descricao            String             @db.NVarChar(Max)
+  status               String             @default("ABERTA")
+  acaoCorretiva        String?
+  responsavelId        String
+  dataRegistro         DateTime           @default(now())
+  dataResolucao        DateTime?
+  arquivoUrl           String?
+  observacao           String?            @db.NVarChar(Max)
+  criadoEm             DateTime           @default(now())
+  atualizadoEm         DateTime           @updatedAt
+  pedidoCompra         PedidoCompra       @relation(fields: [pedidoCompraId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  recebimentoCompra    RecebimentoCompra? @relation(fields: [recebimentoCompraId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fornecedor           Fornecedor?        @relation(fields: [fornecedorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  produto              Produto?           @relation(fields: [produtoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  responsavel          Usuario            @relation(fields: [responsavelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([pedidoCompraId])
+  @@index([recebimentoCompraId])
+  @@index([fornecedorId])
+  @@index([produtoId])
+  @@index([tipoDivergencia])
+  @@index([status])
+  @@index([dataRegistro])
+  @@map("divergencias_recebimento")
+}
+
+model OrdemServicoEvento {
+  id              String   @id @default(uuid())
+  ordemServicoId  String
+  usuarioId       String?
+
+  tipo            String
+  titulo          String
+  descricao       String?  @db.NVarChar(Max)
+  entidade        String?
+  entidadeId      String?
+
+  antes           String?  @db.NVarChar(Max)
+  depois          String?  @db.NVarChar(Max)
+
+  severidade      String   @default("INFO")
+  origem          String   @default("SISTEMA")
+
+  criadoEm        DateTime @default(now())
+
+  ordemServico    OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario         Usuario?     @relation(fields: [usuarioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([ordemServicoId])
+  @@index([criadoEm])
+  @@map("ordem_servico_eventos")
+}
+
+model Orcamento {
+  id                 String       @id @default(uuid())
+  numero             Int          @unique @default(autoincrement())
+  ordemServicoId     String
+  status             String       @default("EMITIDO")
+  subtotalServicos   Float        @default(0)
+  subtotalPecas      Float        @default(0)
+  desconto           Float        @default(0)
+  total              Float        @default(0)
+  validadeDias       Int          @default(15)
+  prazoEstimado      String?
+  observacoes        String?      @db.NVarChar(Max)
+  enviadoEm          DateTime?
+  canalEnvio         String?
+  aprovadoEm         DateTime?
+  canalAprovacao     String?
+  aprovadoPor        String?
+  recusadoEm         DateTime?
+  canalRecusa        String?
+  motivoRecusa       String?
+  criadoEm           DateTime     @default(now())
+  atualizadoEm       DateTime     @updatedAt
+
+  ordemServico       OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  itens              OrcamentoItem[]
+  interacoes         ClienteInteracao[]
+
+  @@map("orcamentos")
+}
+
+model OrcamentoItem {
+  id             String    @id @default(uuid())
+  orcamentoId    String
+  tipo           String    
+  descricao      String    @db.NVarChar(Max)
+  quantidade     Int
+  valorUnitario  Float
+  valorTotal     Float
+  observacao     String?   @db.NVarChar(Max)
+  criadoEm       DateTime  @default(now())
+  atualizadoEm   DateTime  @updatedAt
+
+  orcamento      Orcamento @relation(fields: [orcamentoId], references: [id], onDelete: Cascade)
+
+  @@map("orcamento_itens")
+}
+
+model ClienteInteracao {
+  id               String   @id @default(uuid())
+  clienteId        String
+  veiculoId        String?
+  ordemServicoId   String?
+  orcamentoId      String?
+  
+  tipo             String
+  motivo           String?
+  canal            String
+  prioridade       String @default("NORMAL")
+  status           String @default("PENDENTE")
+  
+  assunto          String
+  descricao        String?  @db.NVarChar(Max)
+  mensagemSugerida String?  @db.NVarChar(Max)
+  resultado        String?  @db.NVarChar(Max)
+  proximaAcao      String?
+  dataPrevista     DateTime?
+  dataRealizada    DateTime?
+  
+  responsavelId    String?
+  
+  criadoEm         DateTime @default(now())
+  atualizadoEm     DateTime @updatedAt
+
+  cliente          Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  veiculo          Veiculo?      @relation(fields: [veiculoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ordemServico     OrdemServico? @relation(fields: [ordemServicoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  orcamento        Orcamento?    @relation(fields: [orcamentoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  responsavel      Usuario?      @relation(fields: [responsavelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([clienteId])
+  @@index([status])
+  @@index([dataPrevista])
+  @@map("cliente_interacoes")
+}
+
+model ClienteTag {
+  id           String   @id @default(uuid())
+  nome         String   @unique
+  cor          String   @default("#cccccc")
+  descricao    String?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  clientes     ClienteTagAssignment[]
+
+  @@map("cliente_tags")
+}
+
+model ClienteTagAssignment {
+  id         String     @id @default(uuid())
+  clienteId  String
+  tagId      String
+  criadoEm   DateTime   @default(now())
+
+  cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  tag        ClienteTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, tagId])
+  @@map("cliente_tag_assignments")
+}
+
+model DocumentoPedidoCompra {
+  id               String       @id @default(uuid())
+  pedidoCompraId   String
+  tipoDocumento    String
+  descricao        String       @db.NVarChar(Max)
+  nomeOriginal     String       @db.NVarChar(Max)
+  nomeArquivoSalvo String       @db.NVarChar(Max)
+  caminhoRelativo  String       @db.NVarChar(Max)
+  mimeType         String
+  tamanhoBytes     Int
+  observacao       String?      @db.NVarChar(Max)
+  usuarioId        String?
+  criadoEm         DateTime     @default(now())
+  status           String       @default("ATIVO") // ATIVO, CANCELADO
+
+  pedidoCompra     PedidoCompra @relation(fields: [pedidoCompraId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario          Usuario?     @relation(fields: [usuarioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([pedidoCompraId])
+  @@index([tipoDocumento])
+  @@index([status])
+  @@map("documentos_pedido_compra")
+}

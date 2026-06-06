@@ -1,0 +1,101 @@
+# =========================
+# AvanceOS - Git Ignore
+# =========================
+
+# Dependências
+node_modules/
+*/node_modules/
+
+# Builds
+dist/
+build/
+.next/
+out/
+coverage/
+
+# Variáveis de ambiente e segredos
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Configs sensíveis
+config/.env
+config/*.env
+
+# Backups locais do projeto
+backups/
+backup/
+*_backup_*/
+frontend_backup_*/
+backend_backup_*/
+avanceos-fix-orcamentos-auth/tmp/
+
+# Uploads e anexos
+uploads/
+backend/uploads/
+frontend/uploads/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Banco/volumes locais
+*.db
+*.sqlite
+*.sqlite3
+mssql_data/
+postgres_data/
+mysql_data/
+
+# Docker local
+docker-compose.override.yml
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Certificados/chaves
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+
+# Temporários
+tmp/
+temp/
+.cache/
+
+# Backups e arquivos temporários de correção
+*.bak
+*.bak-*
+*.save
+*.tmp
+*.old
+*.orig
+
+# Pacotes compactados locais
+*.tar
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Resultados temporários de busca/teste
+frontend/search_results_*.json
+
+# Duplicidades acidentais de imagens
+*.png.png
+*.jpg.jpg
+*.jpeg.jpeg
