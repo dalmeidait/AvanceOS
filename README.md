@@ -244,17 +244,25 @@ O AvanceOS foi planejado com uma arquitetura moderna, híbrida e compatível com
 
 ### Camada Microsoft
 
-O projeto considera integração com tecnologias Microsoft, como:
+O projeto considera integração com tecnologias Microsoft, combinando infraestrutura local, identidade corporativa e serviços de inteligência artificial em nuvem.
+
+Tecnologias consideradas na arquitetura:
 
 - Windows Server
 - AD DS
 - DNS
 - GPO
 - Microsoft Entra ID
-- Azure OpenAI
+- Azure
 - Microsoft Foundry
+- Agente de IA baseado no modelo Phi-4 mini
+- Integração da OFYCIA com serviços de IA generativa
 - Power BI Desktop
-- ambiente híbrido entre infraestrutura local e serviços de nuvem
+- Ambiente híbrido entre infraestrutura local e serviços de nuvem
+
+No contexto do AvanceOS, a camada Microsoft tem como objetivo aproximar o projeto de um cenário empresarial real, onde a oficina utiliza infraestrutura on-premise para autenticação, rede e operação interna, mas também pode consumir recursos em nuvem para ampliar inteligência, automação e análise de dados.
+
+A integração com o Microsoft Foundry e o modelo Phi-4 mini é planejada para alimentar a OFYCIA, a assistente inteligente do AvanceOS, permitindo apoio em diagnósticos, interpretação de sintomas, análise de ordens de serviço, geração de insights operacionais e suporte à tomada de decisão.
 
 ---
 
