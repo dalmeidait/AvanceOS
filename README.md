@@ -195,7 +195,6 @@ Ela foi idealizada para apoiar:
 - geração de insights técnicos;
 - análise de histórico;
 - sugestões operacionais;
-- relatórios;
 - suporte ao atendimento;
 - análise de dados do TechHub;
 - apoio à tomada de decisão.
